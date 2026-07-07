@@ -4,10 +4,12 @@ set -e
 CONFIG_FILE="/var/www/html/storage/system/config.php"
 DB_SCHEMA="/cms_db_schema.sql"
 
+# Ensure storage is writable by www-data
+mkdir -p /var/www/html/storage/system
+chown -R www-data:www-data /var/www/html/storage 2>/dev/null || true
+
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Running first-time setup..."
-
-    mkdir -p /var/www/html/storage/system
 
     CMS_SECRETKEY=${CMS_SECRETKEY:-$(openssl rand -base64 32)}
     WEBSITE_SECRETKEY=${WEBSITE_SECRETKEY:-$(openssl rand -base64 32)}
@@ -36,6 +38,8 @@ EOF3
 {"WEBSITE_TITLE":"${CMS_WEBSITE_TITLE:-My IO200 Website}","WEBSITE_MAIL":"${CMS_ADMIN_EMAIL}","THEME":{"layout":"fullwidth","mode":"light","font":"karlabold","flavors":["layoutfixedheader","slideeffect"]}}
 EOF4
 
+    chown -R www-data:www-data /var/www/html/storage/system
+
     if [ -f "$DB_SCHEMA" ]; then
         echo "Creating database tables..."
         php -r "
@@ -46,13 +50,13 @@ EOF4
             while (\$db->next_result()) {;}
             \$db->close();
             echo 'Database tables created.' . PHP_EOL;
-        "
+        " || echo "WARNING: Database setup failed - check your DB credentials. The app will still start."
     fi
 
     echo "Setup complete."
 fi
 
-# remove installer files if present
-rm -f /var/www/html/install.php /var/www/html/dist.zip
+# remove installer files
+rm -f /var/www/html/install.php /var/www/html/dist.zip 2>/dev/null || true
 
 exec apache2-foreground
