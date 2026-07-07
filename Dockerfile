@@ -41,6 +41,10 @@ RUN set -eux; \
     cp /var/www/html/storage/temp/cms_db_schema.sql /cms_db_schema.sql; \
     rm -rf /var/www/html/storage/temp
 
+RUN set -eux; \
+    mkdir -p /var/www/html/storage.defaults; \
+    cp -r /var/www/html/storage/. /var/www/html/storage.defaults/
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

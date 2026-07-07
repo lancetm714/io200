@@ -8,6 +8,16 @@ DB_SCHEMA="/cms_db_schema.sql"
 mkdir -p /var/www/html/storage/system
 chown -R www-data:www-data /var/www/html/storage 2>/dev/null || true
 
+# Restore default storage files hidden by bind mount (exclude system/ - managed by entrypoint)
+if [ -d /var/www/html/storage.defaults ]; then
+    for dir in cache2 custom import lang; do
+        if [ -d /var/www/html/storage.defaults/$dir ]; then
+            mkdir -p /var/www/html/storage/$dir
+            cp -rn /var/www/html/storage.defaults/$dir/. /var/www/html/storage/$dir/
+        fi
+    done
+fi
+
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Running first-time setup..."
 
