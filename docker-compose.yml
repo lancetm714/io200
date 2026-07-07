@@ -16,11 +16,18 @@ services:
       - io200-net
 
   app:
-    image: io200-app:latest
+    image: webdevops/php-apache:8.1
     container_name: io200-app
     restart: unless-stopped
     ports:
       - "${HTTP_PORT:-8080}:80"
+    environment:
+      WEB_DOCUMENT_ROOT: /var/www/html
+      PHP_DATE_TIMEZONE: UTC
+      PHP_INI_UPLOAD_MAX_FILESIZE: 128M
+      PHP_INI_POST_MAX_SIZE: 128M
+      PHP_INI_MAX_EXECUTION_TIME: 120
+      PHP_INI_MEMORY_LIMIT: 256M
     volumes:
       - /volume1/docker/io200:/var/www/html
     depends_on:
