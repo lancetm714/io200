@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  db:
+    image: mariadb:10.11
+    container_name: io200-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme_root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-io200}
+      MYSQL_USER: ${MYSQL_USER:-io200}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme_db_password}
+    volumes:
+      - /volume1/docker/io200/mysql:/var/lib/mysql
+    networks:
+      - io200-net
+
+  app:
+    image: io200-app:latest
+    container_name: io200-app
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    volumes:
+      - /volume1/docker/io200:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - io200-net
+
+networks:
+  io200-net:
+    driver: bridge
+
+volumes: {}
