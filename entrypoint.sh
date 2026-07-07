@@ -2,7 +2,7 @@
 set -e
 
 CONFIG_FILE="/var/www/html/storage/system/config.php"
-DB_SCHEMA="/var/www/html/storage/temp/cms_db_schema.sql"
+DB_SCHEMA="/cms_db_schema.sql"
 
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Running first-time setup..."
@@ -47,11 +47,12 @@ EOF4
             \$db->close();
             echo 'Database tables created.' . PHP_EOL;
         "
-        rm -f "$DB_SCHEMA"
-        rm -f /var/www/html/storage/temp/cms_koken_migration.sql
     fi
 
     echo "Setup complete."
 fi
+
+# remove installer files if present
+rm -f /var/www/html/install.php /var/www/html/dist.zip
 
 exec apache2-foreground

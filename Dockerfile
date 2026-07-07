@@ -37,6 +37,10 @@ RUN set -eux; \
     chown -R www-data:www-data /var/www/html; \
     chmod -R 755 /var/www/html
 
+RUN set -eux; \
+    cp /var/www/html/storage/temp/cms_db_schema.sql /cms_db_schema.sql; \
+    rm -rf /var/www/html/storage/temp
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
