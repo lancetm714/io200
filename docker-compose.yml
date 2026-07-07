@@ -16,20 +16,26 @@ services:
       - io200-net
 
   app:
-    image: webdevops/php-apache:8.1
+    image: ghcr.io/lancetm714/io200:latest
     container_name: io200-app
     restart: unless-stopped
     ports:
       - "${HTTP_PORT:-8080}:80"
     environment:
-      WEB_DOCUMENT_ROOT: /var/www/html
-      PHP_DATE_TIMEZONE: UTC
+      CMS_DB_HOST: db
+      CMS_DB_USER: io200
+      CMS_DB_PASSWORD: ${MYSQL_PASSWORD:-changeme_db_password}
+      CMS_DB_NAME: io200
+      CMS_ADMIN_EMAIL: ${CMS_ADMIN_EMAIL:-admin@example.com}
+      CMS_ADMIN_PASSWORD: ${CMS_ADMIN_PASSWORD:-changeme_admin_password}
+      CMS_WEBSITE_URL: ${CMS_WEBSITE_URL:-http://localhost:8080}
+      CMS_WEBSITE_TITLE: ${CMS_WEBSITE_TITLE:-My IO200 Website}
       PHP_INI_UPLOAD_MAX_FILESIZE: 128M
       PHP_INI_POST_MAX_SIZE: 128M
       PHP_INI_MAX_EXECUTION_TIME: 120
       PHP_INI_MEMORY_LIMIT: 256M
     volumes:
-      - /volume1/docker/io200:/var/www/html
+      - /volume1/docker/io200/storage:/var/www/html/storage
     depends_on:
       - db
     networks:
@@ -38,5 +44,3 @@ services:
 networks:
   io200-net:
     driver: bridge
-
-volumes: {}

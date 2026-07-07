@@ -8,8 +8,8 @@ RUN set -eux; \
         libpng-dev \
         libwebp-dev \
         libzip-dev \
-        libmagickwand-dev \
         unzip \
+        curl \
     ; \
     docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp; \
     docker-php-ext-install -j$(nproc) \
@@ -20,7 +20,6 @@ RUN set -eux; \
         zip \
         exif \
     ; \
-    pecl install imagick-3.7.0 && docker-php-ext-enable imagick || true; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
@@ -28,11 +27,19 @@ RUN a2enmod rewrite
 
 COPY php.ini /usr/local/etc/php/conf.d/io200.ini
 
-COPY . /var/www/html/
+RUN set -eux; \
+    curl -o /tmp/dist.zip "https://www.service.io200.com/api/v1/download:distribution?install"; \
+    unzip -o /tmp/dist.zip -d /tmp/dist; \
+    cp -r /tmp/dist/system-distribution/* /var/www/html/; \
+    rm -rf /tmp/dist.zip /tmp/dist
 
 RUN set -eux; \
     chown -R www-data:www-data /var/www/html; \
-    chmod -R 755 /var/www/html; \
-    chmod 644 /var/www/html/install.php
+    chmod -R 755 /var/www/html
 
-VOLUME /var/www/html
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+VOLUME /var/www/html/storage
+
+ENTRYPOINT ["/entrypoint.sh"]
