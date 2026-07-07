@@ -8,6 +8,7 @@ RUN set -eux; \
         libpng-dev \
         libwebp-dev \
         libzip-dev \
+        libmagickwand-dev \
         unzip \
     ; \
     docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp; \
@@ -19,8 +20,7 @@ RUN set -eux; \
         zip \
         exif \
     ; \
-    pecl install imagick; \
-    docker-php-ext-enable imagick; \
+    pecl install imagick-3.7.0 && docker-php-ext-enable imagick || true; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
