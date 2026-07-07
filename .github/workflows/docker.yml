@@ -3,10 +3,6 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [master]
-    paths:
-      - "Dockerfile"
-      - "php.ini"
-      - ".github/workflows/docker.yml"
   workflow_dispatch:
 
 jobs:
