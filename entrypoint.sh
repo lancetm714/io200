@@ -46,14 +46,14 @@ fi
 # Always attempt DB migration (retry in case MariaDB isn't ready yet)
 if [ -f "$DB_SCHEMA" ]; then
     echo "Waiting for database connection..."
-    for i in $(seq 1 10); do
+    for i in $(seq 1 30); do
         php -r "
             \$db = @new mysqli('${CMS_DB_HOST:-db}', '${CMS_DB_USER:-io200}', '${CMS_DB_PASSWORD}', '${CMS_DB_NAME:-io200}');
             if (!\$db->connect_error) { echo 'connected'; }
             \$db->close();
-        " 2>/dev/null | grep -q connected && break
-        echo "  attempt $i/10 failed, retrying in 3s..."
-        sleep 3
+        " 2>/dev/null | grep -q connected && echo "  DB ready." && break
+        echo "  attempt $i/30 failed, retrying in 5s..."
+        sleep 5
     done
 
     echo "Applying database schema..."
