@@ -40,20 +40,32 @@ EOF4
 
     chown -R www-data:www-data /var/www/html/storage/system
 
-    if [ -f "$DB_SCHEMA" ]; then
-        echo "Creating database tables..."
-        php -r "
-            \$db = new mysqli('${CMS_DB_HOST:-db}', '${CMS_DB_USER:-io200}', '${CMS_DB_PASSWORD}', '${CMS_DB_NAME:-io200}');
-            if (\$db->connect_error) { echo 'DB connection failed: ' . \$db->connect_error . PHP_EOL; exit(1); }
-            \$sql = file_get_contents('$DB_SCHEMA');
-            \$db->multi_query(\$sql);
-            while (\$db->next_result()) {;}
-            \$db->close();
-            echo 'Database tables created.' . PHP_EOL;
-        " || echo "WARNING: Database setup failed - check your DB credentials. The app will still start."
-    fi
-
     echo "Setup complete."
+fi
+
+# Always attempt DB migration (retry in case MariaDB isn't ready yet)
+if [ -f "$DB_SCHEMA" ]; then
+    echo "Waiting for database connection..."
+    for i in $(seq 1 10); do
+        php -r "
+            \$db = @new mysqli('${CMS_DB_HOST:-db}', '${CMS_DB_USER:-io200}', '${CMS_DB_PASSWORD}', '${CMS_DB_NAME:-io200}');
+            if (!\$db->connect_error) { echo 'connected'; }
+            \$db->close();
+        " 2>/dev/null | grep -q connected && break
+        echo "  attempt $i/10 failed, retrying in 3s..."
+        sleep 3
+    done
+
+    echo "Applying database schema..."
+    php -r "
+        \$db = new mysqli('${CMS_DB_HOST:-db}', '${CMS_DB_USER:-io200}', '${CMS_DB_PASSWORD}', '${CMS_DB_NAME:-io200}');
+        if (\$db->connect_error) { echo 'DB connection failed: ' . \$db->connect_error . PHP_EOL; exit(1); }
+        \$sql = file_get_contents('$DB_SCHEMA');
+        @\$db->multi_query(\$sql);
+        while (\$db->next_result()) {;}
+        \$db->close();
+        echo 'Database schema applied.' . PHP_EOL;
+    " || echo "WARNING: DB schema may already exist or connection failed."
 fi
 
 # remove installer files
