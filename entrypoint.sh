@@ -66,16 +66,31 @@ if [ -f "$DB_SCHEMA" ]; then
         sleep 5
     done
 
-    echo "Applying database schema..."
-    php -r "
-        \$db = new mysqli('${CMS_DB_HOST:-db}', '${CMS_DB_USER:-io200}', '${CMS_DB_PASSWORD}', '${CMS_DB_NAME:-io200}');
-        if (\$db->connect_error) { echo 'DB connection failed: ' . \$db->connect_error . PHP_EOL; exit(1); }
-        \$sql = file_get_contents('$DB_SCHEMA');
-        @\$db->multi_query(\$sql);
-        while (\$db->next_result()) {;}
+    echo "Checking if schema already applied..."
+    SCHEMA_EXISTS=$(php -r "
+        \$db = @new mysqli('${CMS_DB_HOST:-db}', '${CMS_DB_USER:-io200}', '${CMS_DB_PASSWORD}', '${CMS_DB_NAME:-io200}');
+        if (\$db->connect_error) { echo 'error'; exit(1); }
+        \$r = \$db->query(\"SHOW TABLES LIKE 'cms_articles'\");
+        echo \$r->num_rows > 0 ? 'yes' : 'no';
         \$db->close();
-        echo 'Database schema applied.' . PHP_EOL;
-    " || echo "WARNING: DB schema may already exist or connection failed."
+    " 2>/dev/null || echo "error")
+
+    if [ "$SCHEMA_EXISTS" = "no" ]; then
+        echo "Applying database schema..."
+        php -r "
+            \$db = new mysqli('${CMS_DB_HOST:-db}', '${CMS_DB_USER:-io200}', '${CMS_DB_PASSWORD}', '${CMS_DB_NAME:-io200}');
+            if (\$db->connect_error) { echo 'DB connection failed: ' . \$db->connect_error . PHP_EOL; exit(1); }
+            \$sql = file_get_contents('$DB_SCHEMA');
+            \$db->multi_query(\$sql);
+            while (\$db->next_result()) {;}
+            \$db->close();
+            echo 'Database schema applied.' . PHP_EOL;
+        " || echo "WARNING: Schema apply failed."
+    elif [ "$SCHEMA_EXISTS" != "yes" ]; then
+        echo "WARNING: Could not check schema status (DB connection issue)."
+    else
+        echo "Schema already applied, skipping."
+    fi
 fi
 
 # remove installer files
