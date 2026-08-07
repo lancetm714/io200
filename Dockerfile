@@ -25,12 +25,19 @@ RUN set -eux; \
 
 RUN a2enmod rewrite
 
+RUN cat > /etc/apache2/conf-available/io200-rewrite.conf <<'APACHECONF'
+<Directory /var/www/html>
+    AllowOverride All
+</Directory>
+APACHECONF
+RUN a2enconf io200-rewrite
+
 COPY php.ini /usr/local/etc/php/conf.d/io200.ini
 
 RUN set -eux; \
     curl -o /tmp/dist.zip "https://www.service.io200.com/api/v1/download:distribution?install"; \
     unzip -o /tmp/dist.zip -d /tmp/dist; \
-    cp -r /tmp/dist/system-distribution/* /var/www/html/; \
+    cp -r /tmp/dist/system-distribution/. /var/www/html/; \
     rm -rf /tmp/dist.zip /tmp/dist
 
 RUN set -eux; \
