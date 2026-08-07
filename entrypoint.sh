@@ -6,11 +6,12 @@ DB_SCHEMA="/cms_db_schema.sql"
 
 # Ensure storage is writable by www-data
 mkdir -p /var/www/html/storage/system
+mkdir -p /var/www/html/storage/originals /var/www/html/storage/temp /var/www/html/storage/cache
 chown -R www-data:www-data /var/www/html/storage 2>/dev/null || true
 
 # Restore default storage files hidden by bind mount (exclude system/ - managed by entrypoint)
 if [ -d /var/www/html/storage.defaults ]; then
-    for dir in cache2 custom import lang; do
+    for dir in cache2 custom import lang originals temp cache; do
         if [ -d /var/www/html/storage.defaults/$dir ]; then
             mkdir -p /var/www/html/storage/$dir
             cp -rn /var/www/html/storage.defaults/$dir/. /var/www/html/storage/$dir/
@@ -30,9 +31,21 @@ define('CMS_DB_HOSTNAME', '${CMS_DB_HOST:-db}');
 define('CMS_DB_USERNAME', '${CMS_DB_USER:-io200}');
 define('CMS_DB_PASSWORD', '${CMS_DB_PASSWORD}');
 define('CMS_DB_DATABASE', '${CMS_DB_NAME:-io200}');
+
 define('CMS_SECRETKEY', '${CMS_SECRETKEY}');
+define('CMS_ORIGINAL_IMAGE_BASEPATH', '/storage/originals');
+define('CMS_ORIGINAL_IMAGE_SUBFOLDERDEPTH', 2);
+define('CMS_ORIGINAL_IMAGE_SECRETFOLDERLENGTH', 20);
+
 define('WEBSITE_SECRETKEY', '${WEBSITE_SECRETKEY}');
+define('WEBSITE_TEMP_BASEPATH', '/storage/temp');
+define('WEBSITE_CACHE_IMAGE_BASEPATH', '/storage/cache');
+define('WEBSITE_CACHE_IMAGE_SUBFOLDERDEPTH', 2);
+define('WEBSITE_CACHE_IMAGE_SECRETFOLDERLENGTH', 20);
+define('WEBSITE_CACHE_IMAGE_REVERSEPATH', true);
 define('WEBSITE_URL', '${CMS_WEBSITE_URL}');
+
+define('SERVICE_URL', 'https://www.service.io200.com');
 EOF
 
     cat > /var/www/html/storage/system/service.json <<EOF2
